@@ -236,7 +236,11 @@ void Sample::Update(DX::StepTimer const& timer)
 
         if (m_gamePadButtons.x == GamePad::ButtonStateTracker::PRESSED)
         {
-            MakeHttpCall();
+            MakeWebsocket();
+        }
+        if (m_gamePadButtons.a == GamePad::ButtonStateTracker::PRESSED)
+        {
+            SendMessage();
         }
 
         if (pad.IsViewPressed() || pad.IsBPressed())
@@ -397,6 +401,51 @@ std::vector<std::vector<std::string>> ExtractAllHeaders(_In_ HCCallHandle call)
     }
 
     return headers;
+}
+
+HCWebsocketHandle handle{ nullptr };
+
+void Sample::BinaryReceiveHandler(
+    _In_ HCWebsocketHandle /*websocket*/,
+    _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+    _In_ uint32_t payloadSize,
+    _In_ void* functionContext
+)
+{
+    auto bytes = reinterpret_cast<const char*>(payloadBytes);
+    g_MainPage->m_console->WriteLine(L"Received");
+}
+
+void Sample::MakeWebsocket()
+{
+    HCWebSocketCreate(&handle, nullptr, BinaryReceiveHandler, nullptr, nullptr);
+
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
+    // asyncBlock->context = call;
+    asyncBlock->queue = m_queue;
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+    {
+        HRESULT hr = XAsyncGetStatus(asyncBlock, false);
+    };
+    HCWebSocketConnectAsync("wss://base64-live.herokuapp.com", "", handle, asyncBlock);
+}
+
+void Sample::SendMessage()
+{
+    XAsyncBlock* asyncBlock = new XAsyncBlock;
+    ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
+    // asyncBlock->context = call;
+    asyncBlock->queue = m_queue;
+    asyncBlock->callback = [](XAsyncBlock* asyncBlock)
+    {
+        HRESULT hr = XAsyncGetStatus(asyncBlock, false);
+        hr = S_OK;
+    };
+
+    std::string str = "Hello!";
+    auto buffer = reinterpret_cast<const uint8_t*>(str.c_str());
+    HCWebSocketSendBinaryMessageAsync(handle, buffer, str.size() + 1, asyncBlock);
 }
 
 void Sample::MakeHttpCall()

@@ -42,6 +42,15 @@ private:
     void StartBackgroundThread();
     void StopBackgroundThread();
     void MakeHttpCall();
+    void MakeWebsocket();
+    void SendMessage();
+
+    static void BinaryReceiveHandler(
+        _In_ HCWebsocketHandle websocket,
+        _In_reads_bytes_(payloadSize) const uint8_t* payloadBytes,
+        _In_ uint32_t payloadSize,
+        _In_ void* functionContext
+    );
     HANDLE m_hBackgroundThread;
 
     // Device resources.
