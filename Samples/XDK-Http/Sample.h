@@ -43,6 +43,7 @@ private:
     void StopBackgroundThread();
     void MakeHttpCall();
     void MakeWebsocket();
+    void CloseWebsocket();
     void SendMessage();
 
     static void BinaryReceiveHandler(

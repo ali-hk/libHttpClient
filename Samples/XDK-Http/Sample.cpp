@@ -242,6 +242,10 @@ void Sample::Update(DX::StepTimer const& timer)
         {
             SendMessage();
         }
+        if (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED)
+        {
+            CloseWebsocket();
+        }
 
         if (pad.IsViewPressed() || pad.IsBPressed())
         {
@@ -430,27 +434,39 @@ void Sample::MakeWebsocket()
 
     XAsyncBlock* asyncBlock = new XAsyncBlock;
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
-    // asyncBlock->context = call;
     asyncBlock->queue = m_queue;
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         HRESULT hr = XAsyncGetStatus(asyncBlock, false);
+        g_MainPage->m_console->WriteLine(L"Websocket created");
     };
-    HCWebSocketConnectAsync("wss://10.159.17.10:8081", "", handle, asyncBlock);
+    // HCWebSocketConnectAsync("wss://10.159.17.10:8081", "", handle, asyncBlock);
+
+    g_MainPage->m_console->WriteLine(L"Creating websocket");
+    HCWebSocketConnectAsync("wss://echo.websocket.org", "", handle, asyncBlock);
+}
+
+void Sample::CloseWebsocket()
+{
+    g_MainPage->m_console->WriteLine(L"Closing websocket");
+    HCWebSocketCloseHandle(handle);
+    handle = nullptr;
+    g_MainPage->m_console->WriteLine(L"Websocket closed");
 }
 
 void Sample::SendMessage()
 {
     XAsyncBlock* asyncBlock = new XAsyncBlock;
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
-    // asyncBlock->context = call;
     asyncBlock->queue = m_queue;
     asyncBlock->callback = [](XAsyncBlock* asyncBlock)
     {
         HRESULT hr = XAsyncGetStatus(asyncBlock, false);
-        hr = S_OK;
+        g_MainPage->m_console->WriteLine(L"Message sent");
     };
 
+
+    g_MainPage->m_console->WriteLine(L"Sending message");
     std::string str = "Hello!";
     auto buffer = reinterpret_cast<const uint8_t*>(str.c_str());
     HCWebSocketSendBinaryMessageAsync(handle, buffer, str.size() + 1, asyncBlock);
