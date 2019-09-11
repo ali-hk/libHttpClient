@@ -415,10 +415,18 @@ void Sample::BinaryReceiveHandler(
     auto bytes = reinterpret_cast<const char*>(payloadBytes);
     g_MainPage->m_console->WriteLine(L"Received");
 }
+void Sample::StringReceiveHandler(
+    _In_ HCWebsocketHandle websocket,
+    _In_z_ const char* incomingBodyString,
+    _In_ void* functionContext
+)
+{
+    g_MainPage->m_console->WriteLine(L"Received");
+}
 
 void Sample::MakeWebsocket()
 {
-    HCWebSocketCreate(&handle, nullptr, BinaryReceiveHandler, nullptr, nullptr);
+    HCWebSocketCreate(&handle, StringReceiveHandler, BinaryReceiveHandler, nullptr, nullptr);
 
     XAsyncBlock* asyncBlock = new XAsyncBlock;
     ZeroMemory(asyncBlock, sizeof(XAsyncBlock));
@@ -428,7 +436,7 @@ void Sample::MakeWebsocket()
     {
         HRESULT hr = XAsyncGetStatus(asyncBlock, false);
     };
-    HCWebSocketConnectAsync("wss://base64-live.herokuapp.com", "", handle, asyncBlock);
+    HCWebSocketConnectAsync("wss://10.159.17.10:8081", "", handle, asyncBlock);
 }
 
 void Sample::SendMessage()
